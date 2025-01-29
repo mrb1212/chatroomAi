@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #FFA500;
+  --background: #121212;
+  --surface: #1E1E1E;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A0A0;
+}
+
+body {
+  font-family: 'Vazirmatn', system-ui, sans-serif;
+  background-color: var(--background);
+  color: var(--text-primary);
+  direction: rtl;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-xl transition-all duration-200 
+           disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl;
+  }
+  
+  .input-field {
+    @apply bg-surface text-white rounded-xl px-4 py-2 border border-gray-700 
+           focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 
+           w-full transition-all duration-200
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-surface/50 transition-all duration-200
+           hover:shadow-lg;
+  }
+  
+  .sidebar-item.active {
+    @apply bg-surface text-primary border-r-2 border-primary shadow-md;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    width: 100%;
+    z-index: 50;
+    border-top: 1px solid var(--surface);
+  }
+  
+  .main-content {
+    margin-bottom: 4rem;
+  }
+}
