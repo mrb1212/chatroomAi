@@ -92,7 +92,7 @@ function App() {
     return <Loading />;
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !auth.user?.firstName || !auth.user?.lastName) {
     return <AuthForm />;
   }
 

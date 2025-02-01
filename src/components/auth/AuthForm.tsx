@@ -55,12 +55,27 @@ export const AuthForm = () => {
 
     return () => clearInterval(timer);
   }, []);
+  
+
+
 
   useEffect(() => {
       if (auth.isAuthenticated && auth.user?.firstName && auth.user?.lastName && auth?.user?.phoneNumber) {
         navigate('/chat');
+        return;
+      }
+
+      if(!auth.isAuthenticated) {
+        setStep('phone');
+        return
+      }
+      if(!auth.user?.firstName || !auth.user?.lastName) {
+        setStep('info');
+        return;
       }
   }, [auth.isAuthenticated]);
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
