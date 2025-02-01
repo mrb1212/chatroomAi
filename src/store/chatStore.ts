@@ -1,14 +1,8 @@
 import { create } from 'zustand';
+import { supabase } from '../lib/supabase';
 import { getChatGPTResponse } from '../lib/chatgpt';
 import type { ChatMessage } from '../types';
 import { useNotificationStore } from './notificationStore';
-import {
-  getMessages,
-  getMessage,
-  createMessage,
-  updateMessage,
-  deleteMessage,
-} from '../api/messages';
 
 interface ChatState {
   messages: ChatMessage[];
@@ -16,8 +10,6 @@ interface ChatState {
   error: string | null;
   sendMessage: (content: string) => Promise<void>;
   loadChatHistory: (chatId: string) => Promise<void>;
-  updateMessageContent: (messageId: string, content: string) => Promise<void>;
-  deleteMessageById: (messageId: string) => Promise<void>;
   clearMessages: () => void;
 }
 
@@ -32,35 +24,44 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     try {
       // Create user message
-      const userMessage: Omit<ChatMessage, 'id' | 'created_at'> = {
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
         content,
         role: 'user',
+        created_at: new Date().toISOString(),
         chat_id: 'current'
       };
 
-      // Save user message to database
-      const savedUserMessage = await createMessage(userMessage);
-
-      // Update state with user message
+      // Update state with user message immediately
       set(state => ({
-        messages: [...state.messages, savedUserMessage]
+        messages: [...state.messages, userMessage]
       }));
 
       // Get AI response
-      const response = await getChatGPTResponse([...get().messages, savedUserMessage]);
+      const response = await getChatGPTResponse([...get().messages, userMessage]);
 
-      // Create and save AI message
-      const aiMessage: Omit<ChatMessage, 'id' | 'created_at'> = {
+      // Create AI message
+      const aiMessage: ChatMessage = {
+        id: crypto.randomUUID(),
         content: response,
         role: 'assistant',
+        created_at: new Date().toISOString(),
         chat_id: 'current'
       };
 
-      const savedAiMessage = await createMessage(aiMessage);
+      // Save messages to Supabase
+      const { error: dbError } = await supabase
+        .from('messages')
+        .insert([userMessage, aiMessage]);
+
+      if (dbError) {
+        addNotification('پیام‌ها ارسال شدند اما در ذخیره‌سازی خطایی رخ داد', 'error');
+        console.error('Supabase error:', dbError);
+      }
 
       // Update state with AI message
       set(state => ({
-        messages: [...state.messages, savedAiMessage],
+        messages: [...state.messages, aiMessage],
         loading: false
       }));
     } catch (error) {
@@ -75,50 +76,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      const messages = await getMessages(chatId);
-      set({ messages, loading: false });
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('chat_id', chatId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      set({ messages: data || [], loading: false });
     } catch (error) {
       console.error('Error loading chat history:', error);
       set({ error: 'خطا در بارگذاری تاریخچه گفتگو', loading: false });
       addNotification('خطا در بارگذاری تاریخچه گفتگو', 'error');
-    }
-  },
-
-  updateMessageContent: async (messageId: string, content: string) => {
-    const { addNotification } = useNotificationStore.getState();
-    set({ loading: true, error: null });
-
-    try {
-      const updatedMessage = await updateMessage(messageId, { content });
-      set(state => ({
-        messages: state.messages.map(msg =>
-          msg.id === messageId ? updatedMessage : msg
-        ),
-        loading: false
-      }));
-      addNotification('پیام با موفقیت ویرایش شد', 'success');
-    } catch (error) {
-      console.error('Error updating message:', error);
-      set({ error: 'خطا در ویرایش پیام', loading: false });
-      addNotification('خطا در ویرایش پیام', 'error');
-    }
-  },
-
-  deleteMessageById: async (messageId: string) => {
-    const { addNotification } = useNotificationStore.getState();
-    set({ loading: true, error: null });
-
-    try {
-      await deleteMessage(messageId);
-      set(state => ({
-        messages: state.messages.filter(msg => msg.id !== messageId),
-        loading: false
-      }));
-      addNotification('پیام با موفقیت حذف شد', 'success');
-    } catch (error) {
-      console.error('Error deleting message:', error);
-      set({ error: 'خطا در حذف پیام', loading: false });
-      addNotification('خطا در حذف پیام', 'error');
     }
   },
 

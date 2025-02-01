@@ -1,8 +1,6 @@
-export interface User {
-  id: string;
-  email: string;
-  full_name?: string;
-}
+import type { User as SupabaseUser } from '@supabase/supabase-js'
+
+export type User = SupabaseUser
 
 export interface ChatMessage {
   id: string;

@@ -1,0 +1,1 @@
+export const phonePattern= /^09\d{9}$/;

@@ -1,236 +1,360 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Send, Paperclip, Loader, Edit2, Trash2, X, Check } from 'lucide-react';
-import { useChatStore } from '../../store/chatStore';
-import { useParams } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, User, Bot, Paperclip, Image, Globe } from 'lucide-react';
+import { Typewriter } from '../common/Typewriter';
+import './ChatInterface.scss';
+import { LogoAnimation } from '../common/LogoAnimation';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/src/redux/stores/store';
 
-const quickActions = [
-  'تنظیم قرارداد اجاره',
-  'مشاوره قانون کار',
-  'ثبت شرکت',
-  'وکالتنامه رسمی',
-];
-
-const systemPrompts = {
-  'تنظیم قرارداد اجاره': `لطفاً اطلاعات زیر را برای تنظیم قرارداد اجاره وارد کنید:
-1. مشخصات موجر (نام، کد ملی)
-2. مشخصات مستأجر
-3. آدرس و مشخصات ملک
-4. مدت اجاره و مبلغ
-5. شرایط خاص قرارداد`,
-  'مشاوره قانون کار': `لطفاً موضوع مورد نظر خود را در حوزه قانون کار مطرح کنید. موارد رایج:
-1. محاسبه حقوق و مزایا
-2. شرایط قرارداد کار
-3. بیمه و سوابق
-4. مرخصی و ساعات کار`,
-  'ثبت شرکت': `برای راهنمایی در مورد ثبت شرکت، لطفاً اطلاعات زیر را مشخص کنید:
-1. نوع شرکت (سهامی خاص، مسئولیت محدود و...)
-2. موضوع فعالیت
-3. میزان سرمایه
-4. مشخصات شرکا`,
-  'وکالتنامه رسمی': `برای تنظیم وکالتنامه، موارد زیر را مشخص کنید:
-1. مشخصات موکل
-2. مشخصات وکیل
-3. حدود اختیارات
-4. مدت وکالت`,
+type Message = {
+  id: number;
+  content: string;
+  sender: 'user' | 'bot';
+  timestamp: Date;
 };
 
-interface EditingMessage {
-  id: string;
-  content: string;
-}
+const welcomeMessages = [
+  'سلام! من دستیار هوشمند حقوقی شما هستم.',
+  'می‌توانم در موارد زیر به شما کمک کنم:',
+  '• مشاوره حقوقی اولیه',
+  '• تنظیم قراردادها',
+  '• پاسخ به سوالات حقوقی',
+  '• راهنمایی در مورد قوانین',
+  'لطفاً سوال خود را مطرح کنید.'
+];
+
+const staticMessages: Message[] = [
+  {
+    id: 1,
+    content: 'سلام، من دستیار حقوقی هوشمند هستم. چطور میتونم کمکتون کنم؟',
+    sender: 'bot',
+    timestamp: new Date('2024-03-10T10:00:00')
+  },
+  {
+    id: 2,
+    content: 'سلام. من میخوام در مورد قرارداد اجاره سوال بپرسم',
+    sender: 'user',
+    timestamp: new Date('2024-03-10T10:01:00')
+  },
+  {
+    id: 3,
+    content: 'ه،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارد حتما. چه سوالی در مورد قرارداد اجاره دارید؟' ,
+    sender: 'bot',
+    timestamp: new Date('2024-03-10T10:01:30')
+  },  {
+    id: 1,
+    content: 'سلام، من دستیار حقوقی هوشمند هستم. چطور میتونم کمکتون کنم؟',
+    sender: 'bot',
+    timestamp: new Date('2024-03-10T10:00:00')
+  },
+  {
+    id: 2,
+    content: 'سلام. من میخوام در مورد قرارداد اجاره سوال بپرسم',
+    sender: 'user',
+    timestamp: new Date('2024-03-10T10:01:00')
+  },
+  {
+    id: 3,
+    content: 'ه،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارد حتما. چه سوالی در مورد قرارداد اجاره دارید؟' ,
+    sender: 'bot',
+    timestamp: new Date('2024-03-10T10:01:30')
+  } , {
+    id: 1,
+    content: 'سلام، من دستیار حقوقی هوشمند هستم. چطور میتونم کمکتون کنم؟',
+    sender: 'bot',
+    timestamp: new Date('2024-03-10T10:00:00')
+  },
+  {
+    id: 2,
+    content: 'سلام. من میخوام در مورد قرارداد اجاره سوال بپرسم',
+    sender: 'user',
+    timestamp: new Date('2024-03-10T10:01:00')
+  },  {
+    id: 2,
+    content: 'سلام. من میخوام در مورد قرارداد اجاره سوال بپرسم',
+    sender: 'user',
+    timestamp: new Date('2024-03-10T10:01:00')
+  },  {
+    id: 2,
+    content: 'سلام. من میخوام در مورد قرارداد اجاره سوال بپرسم',
+    sender: 'user',
+    timestamp: new Date('2024-03-10T10:01:00')
+  },
+  {
+    id: 3,
+    content: 'ه،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارد حتما. چه سوالی در مورد قرارداد اجاره دارید؟' ,
+    sender: 'bot',
+    timestamp: new Date('2024-03-10T10:01:30')
+  }
+];
+
+const examplePrompts = [
+  {
+    category: 'قراردادها',
+    items: [
+      {
+        title: 'قرارداد اجاره',
+        description: 'راهنمایی برای تنظیم قرارداد اجاره ملک'
+      },
+      {
+        title: 'قرارداد کار',
+        description: 'نمونه قرارداد کار و نکات مهم آن'
+      },
+      {
+        title: 'قرارداد خرید و فروش',
+        description: 'راهنمای تنظیم مبایعه‌نامه و قولنامه'
+      }
+    ]
+  },
+  {
+    category: 'دعاوی حقوقی',
+    items: [
+      {
+        title: 'مطالبه خسارت',
+        description: 'نحوه طرح دعوای مطالبه خسارت'
+      },
+      {
+        title: 'دعاوی ملکی',
+        description: 'راهنمایی در مورد دعاوی تصرف و مالکیت'
+      },
+      {
+        title: 'دعاوی خانواده',
+        description: 'مشاوره در امور طلاق، نفقه و حضانت'
+      }
+    ]
+  },
+  {
+    category: 'امور مالی و مالیاتی',
+    items: [
+      {
+        title: 'مالیات بر درآمد',
+        description: 'محاسبه و قوانین مالیات بر درآمد'
+      },
+      {
+        title: 'مالیات بر ارث',
+        description: 'راهنمای محاسبه و پرداخت مالیات بر ارث'
+      },
+      {
+        title: 'عوارض شهرداری',
+        description: 'اطلاعات در مورد عوارض نوسازی و کسب و کار'
+      }
+    ]
+  },
+  {
+    category: 'کسب و کار',
+    items: [
+      {
+        title: 'ثبت شرکت',
+        description: 'مراحل و مدارک لازم برای ثبت شرکت'
+      },
+      {
+        title: 'قوانین کار',
+        description: 'حقوق و تکالیف کارگر و کارفرما'
+      },
+      {
+        title: 'مجوزهای کسب',
+        description: 'راهنمای دریافت پروانه کسب'
+      }
+    ]
+  }
+];
 
 export function ChatInterface() {
-  const { chatId } = useParams();
-  const [input, setInput] = useState('');
-  const [editingMessage, setEditingMessage] = useState<EditingMessage | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentWelcomeIndex, setCurrentWelcomeIndex] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const {
-    messages,
-    loading,
-    sendMessage,
-    loadChatHistory,
-    clearMessages,
-    updateMessageContent,
-    deleteMessageById,
-  } = useChatStore();
 
+  const auth = useSelector((state: RootState) => state.auth);
+
+  // Simulate loading messages
   useEffect(() => {
-    if (chatId === 'new') {
-      clearMessages();
-    } else if (chatId) {
-      loadChatHistory(chatId);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Handle welcome messages for new chat
+  useEffect(() => {
+    if (!isLoading && messages.length === 0) {
+      const timer = setTimeout(() => {
+        setMessages([]);
+      }, 1000);
+
+      return () => clearTimeout(timer);
     }
-  }, [chatId]);
+  }, []);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || loading) return;
+    if (!newMessage.trim()) return;
 
-    const message = input;
-    setInput('');
-    await sendMessage(message);
+    const userMessage: Message = {
+      id: messages.length + 1,
+      content: newMessage,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setNewMessage('');
   };
 
-  const handleQuickAction = (action: string) => {
-    setInput(systemPrompts[action] || action);
+  const handleExampleClick = (prompt: {title: string, description: string}) => {
+    setNewMessage(prompt.title + '\n' + prompt.description);
   };
 
-  const handleEditMessage = (message: EditingMessage) => {
-    setEditingMessage(message);
-  };
+  const renderExamples = () => (
+    <div className="examples-section">
+      {examplePrompts.map((category, idx) => (
+        <div key={idx} className="example-category">
+          <h3 className="category-title">{category.category}</h3>
+          <div className="examples-grid">
+            {category.items.map((prompt, index) => (
+              <button
+                key={index}
+                className="example-card"
+                onClick={() => handleExampleClick({title: prompt.title, description: prompt.description})}
+              >
+                <h4>{prompt.title}</h4>
+                <p>{prompt.description}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
-  const handleSaveEdit = async () => {
-    if (!editingMessage) return;
-    await updateMessageContent(editingMessage.id, editingMessage.content);
-    setEditingMessage(null);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingMessage(null);
-  };
-
-  const handleDeleteMessage = async (messageId: string) => {
-    if (window.confirm('آیا از حذف این پیام اطمینان دارید؟')) {
-      await deleteMessageById(messageId);
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="loading-container">
+          <LogoAnimation size={48}  />
+          <Typewriter 
+            text="در حال آماده‌سازی دستیار حقوقی..."
+            speed={100}
+            className="loading-text"
+          />
+        </div>
+      );
     }
-  };
+
+    if (messages.length === 0) {
+      return (
+        <div className="new-chat-container">
+          <div className="welcome-section">
+            <LogoAnimation size={48} className="welcome-logo"   />
+            <h2>دستیار حقوقی هوشمند</h2>
+            <p>{auth.user?.firstName ? `سلام ${auth.user?.firstName}، چطور میتونم کمکتون کنم؟` : 'سلام، چطور میتونم کمکتون کنم؟'}</p>
+          </div>
+          {renderExamples()}
+        </div>
+      );
+    }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <div className="max-w-4xl mx-auto">
-          {messages.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">⚖️</div>
-              <h2 className="text-2xl font-bold mb-2">دستیار حقوقی هوشمند</h2>
-              <p className="text-gray-400">
-                سوال حقوقی خود را بپرسید یا از گزینه‌های پیشنهادی استفاده کنید
-              </p>
-            </div>
-          ) : (
             messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl p-4 shadow-lg transition-all hover:shadow-xl group relative ${
-                    message.role === 'user'
-                      ? 'bg-primary text-white ml-4'
-                      : 'bg-surface text-white mr-4'
-                  }`}
-                >
-                  {editingMessage?.id === message.id ? (
-                    <div className="flex flex-col gap-2">
-                      <textarea
-                        value={editingMessage.content}
-                        onChange={(e) =>
-                          setEditingMessage({
-                            ...editingMessage,
-                            content: e.target.value,
-                          })
-                        }
-                        className="bg-background text-white p-2 rounded-lg w-full min-h-[100px] resize-none"
-                      />
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={handleSaveEdit}
-                          className="p-1 rounded-lg hover:bg-background/20"
-                          title="ذخیره"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          className="p-1 rounded-lg hover:bg-background/20"
-                          title="انصراف"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+          className={`message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}
+        >
+          <div className="message-avatar">
+            {message.sender === 'user' ? 
+              <User size={20} /> : 
+              <Bot size={20} />
+            }
+          </div>
+          <div className="message-content">
+            <div className="message-text">{message.content}</div>
+            <div className="message-time">
+              {new Intl.DateTimeFormat('fa-IR', {
+                hour: '2-digit',
+                minute: '2-digit'
+              }).format(message.timestamp)}
                       </div>
-                    </div>
-                  ) : (
-                    <>
-                      {message.content}
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                        <button
-                          onClick={() => handleEditMessage(message)}
-                          className="p-1 rounded-lg hover:bg-background/20"
-                          title="ویرایش"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteMessage(message.id)}
-                          className="p-1 rounded-lg hover:bg-background/20"
-                          title="حذف"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </>
-                  )}
                 </div>
               </div>
             ))
-          )}
+    );
+  };
+
+  return (
+    <div className="chat-container">
+      <div className="messages-container">
+        {[...Array(20)].map((_, i) => (
+          <div key={i} className="particle" />
+        ))}
+        
+        <div className="messages-wrapper">
+          {renderContent()}
           <div ref={messagesEndRef} />
         </div>
       </div>
 
-      {/* Quick Actions and Input */}
-      <div className="border-t border-gray-700 bg-surface">
-        <div className="max-w-4xl mx-auto p-4">
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-            {quickActions.map((action) => (
-              <button
-                key={action}
-                className="px-4 py-2 bg-background text-white rounded-xl whitespace-nowrap hover:bg-primary/10 transition-colors"
-                onClick={() => handleQuickAction(action)}
-              >
-                {action}
+      <div className={`input-container ${messages.length === 0 ? 'new-chat' : ''}`}>
+        <form onSubmit={handleSubmit} className="input-wrapper">
+          <textarea
+            value={newMessage}
+            onChange={(e) => {
+              const textarea = e.target;
+              if(e.target.value.length === 0){
+                textarea.style.height = '44px';
+                textarea.style.overflow = 'hidden';
+              }
+              if(e.target.value.length > 0){
+                textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+              }
+              setNewMessage(e.target.value);
+            }}
+            onKeyDown={(e) => {
+              const textarea = e.target as HTMLTextAreaElement;
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (newMessage.trim()) {
+                  handleSubmit(e as any);
+                textarea.style.height = '44px';
+                }
+              }
+            }}
+            placeholder={messages.length === 0 ? 
+              'سوال خود را بپرسید یا از نمونه‌ها انتخاب کنید' : 
+              'با دستیار حقوقی خودتون صحبت کنید' 
+            }
+            className="message-input"
+            disabled={isLoading}
+          />
+          <div className="input-actions-row">
+            <div className="input-actions">
+              <button type="button" className="action-button">
+                <Paperclip size={20} />
               </button>
-            ))}
+              <button type="button" className="action-button">
+                <Image size={20} />
+              </button>
+              <button type="button" className="action-button">
+                <Globe size={20} />
+              </button>
           </div>
-
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <button
-              type="button"
-              className="p-3 rounded-xl hover:bg-background transition-colors"
-              title="پیوست فایل"
-            >
-              <Paperclip className="w-5 h-5" />
-            </button>
-            
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="سوال حقوقی خود را بپرسید..."
-              className="flex-1 bg-background rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-              disabled={loading}
-            />
-            
             <button
               type="submit"
-              className="bg-primary p-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!input.trim() || loading}
+              className="send-button"
+              disabled={isLoading || !newMessage.trim()}
             >
-              {loading ? (
-                <Loader className="w-5 h-5 animate-spin" />
-              ) : (
-                <Send className="w-5 h-5" />
-              )}
+              <Send size={20} />
             </button>
+          </div>
           </form>
-        </div>
       </div>
     </div>
   );

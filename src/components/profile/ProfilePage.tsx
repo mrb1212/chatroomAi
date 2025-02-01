@@ -1,144 +1,263 @@
-import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Building } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../store/authStore';
-import { useNotificationStore } from '../../store/notificationStore';
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '@/src/redux/stores/store';
+import { AppDispatch } from '@/src/redux/stores/store';
+import { User, Mail, Phone, Calendar, Shield, Award, X, Check } from 'lucide-react';
+import { LogoAnimation } from '../common/LogoAnimation';
+import { updateAuthUser } from '../../redux/actions/authActions';
+import './ProfilePage.scss';
+import { useSnackbar } from 'notistack';
+import { Typewriter } from '../common/Typewriter';
+import { Loading } from '../common/Loading';
 
-interface Profile {
-  full_name: string;
-  phone?: string;
-  company?: string;
-  address?: string;
-}
+export const ProfilePage = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { enqueueSnackbar } = useSnackbar();
+  const auth = useSelector((state: RootState) => state.auth);
+  const user = auth.user;
 
-export function ProfilePage() {
-  const { user } = useAuthStore();
-  const { addNotification } = useNotificationStore();
-  const [loading, setLoading] = useState(false);
-  const [profile, setProfile] = useState<Profile>({
-    full_name: user?.full_name || '',
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    email: user?.email || ''
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    async function loadProfile() {
-      if (!user?.id) return;
+  const userStats = [
+    { 
+      icon: Calendar, 
+      label: 'تاریخ عضویت', 
+      value: '۱۴۰۲/۱۲/۲۰' 
+    },
+    { 
+      icon: Shield, 
+      label: 'نوع اشتراک', 
+      value: 'حرفه‌ای' 
+    },
+    { 
+      icon: Award, 
+      label: 'امتیاز کاربری', 
+      value: '۴.۸/۵' 
+    },
+  ];
 
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
+  const handleEdit = async () => {
+    if (!isEditing) {
+      setIsEditing(true);
+      return;
+    }
+ 
+    // Basic validation
+    if (!editData.firstName.trim() || !editData.lastName.trim()) {
+      enqueueSnackbar('لطفا نام و نام خانوادگی را وارد کنید', { 
+        variant: 'error',
 
-        if (error) throw error;
-        if (data) setProfile(data);
-      } catch (error) {
-        console.error('Error loading profile:', error);
-      }
+      });
+      return;
     }
 
-    loadProfile();
-  }, [user?.id]);
+    if (editData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editData.email)) {
+      enqueueSnackbar('لطفا ایمیل معتبر وارد کنید', { 
+        variant: 'error',
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user?.id) return;
+      });
+      return;
+    }
 
-    setLoading(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({ id: user.id, ...profile });
+      setIsLoading(true);
+      
+      await dispatch(await updateAuthUser({
+        firstName: editData.firstName,
+        lastName: editData.lastName,
+        email: editData.email
+      }));
 
-      if (error) throw error;
-      addNotification('اطلاعات پروفایل با موفقیت به‌روزرسانی شد', 'success');
-    } catch (error) {
-      addNotification('خطا در به‌روزرسانی پروفایل', 'error');
+      enqueueSnackbar('اطلاعات با موفقیت بروزرسانی شد', { 
+        variant: 'success',
+      });
+      setIsEditing(false);
+    } catch (err: any) {
+      enqueueSnackbar(err.message || 'خطا در بروزرسانی اطلاعات', { 
+        variant: 'error',
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
+  const handleCancel = () => {
+    setEditData({
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      email: user?.email || ''
+    });
+    setIsEditing(false);
+  };
+
   return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-8">
-        <h1 className="text-2xl font-bold">پروفایل کاربری</h1>
-        <span className="text-3xl">👤</span>
+    <div className="profile-page">
+      <div className="profile-header">
+      
+        <div className="user-info">
+          <div className="avatar">
+            {editData.firstName?.charAt(0).toUpperCase() || 'U'}
+          </div>
+          <div className="user-details">
+            <h1>{editData.firstName} {editData.lastName}</h1>
+            <span className="user-type">کاربر حرفه‌ای</span>
+          </div>
+        </div>
+        
+        <div className="profile-actions">
+          {isEditing ? (
+            <>
+              <button 
+                className="cancel-edit-btn"
+                onClick={handleCancel}
+                disabled={isLoading}
+              >
+                <X size={18} />
+                انصراف
+              </button>
+              <button 
+                className="save-profile-btn"
+                onClick={handleEdit}
+                disabled={isLoading}
+              >
+                <Check size={18} />
+                {isLoading ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
+              </button>
+            </>
+          ) : (
+            <button 
+              className="edit-profile-btn"
+              onClick={handleEdit}
+            >
+              ویرایش پروفایل
+            </button>
+          )}
+        </div>
+        
       </div>
 
-      <div className="max-w-2xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-surface rounded-xl p-6">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm mb-2 flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  نام و نام خانوادگی
-                </label>
-                <input
-                  type="text"
-                  className="input-field"
-                  value={profile.full_name}
-                  onChange={(e) =>
-                    setProfile({ ...profile, full_name: e.target.value })
-                  }
-                />
+      <div className="profile-content">
+        <div className="info-section">
+      {isEditing && (
+          <div style = {{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'}}>
+            <LogoAnimation size={32} showParticles={false} showCircle={false} />
+            <Typewriter 
+              text="اکنون می‌توانید اطلاعات خود را ویرایش کنید"
+              speed={50}
+            />
+          </div>
+        )}
+          <h2>اطلاعات شخصی</h2>
+          <div className="info-grid">
+            <div className="info-item">
+              <User size={20} />
+              <div className="info-text">
+                <label>نام</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editData.firstName}
+                    onChange={(e) => setEditData(prev => ({
+                      ...prev,
+                      firstName: e.target.value
+                    }))}
+                    className="edit-input"
+                    placeholder="نام"
+                  />
+                ) : (
+                  <span>{editData.firstName}</span>
+                )}
               </div>
-
-              <div>
-                <label className="block text-sm mb-2 flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  ایمیل
-                </label>
-                <input
-                  type="email"
-                  className="input-field"
-                  value={user?.email}
-                  disabled
-                />
+            </div>
+            <div className="info-item">
+              <User size={20} />
+              <div className="info-text">
+                <label>نام خانوادگی</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editData.lastName}
+                    onChange={(e) => setEditData(prev => ({
+                      ...prev,
+                      lastName: e.target.value
+                    }))}
+                    className="edit-input"
+                    placeholder="نام خانوادگی"
+                  />
+                ) : (
+                  <span>{editData.lastName}</span>
+                )}
               </div>
-
-              <div>
-                <label className="block text-sm mb-2 flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  شماره تماس
-                </label>
-                <input
-                  type="tel"
-                  className="input-field"
-                  value={profile.phone || ''}
-                  onChange={(e) =>
-                    setProfile({ ...profile, phone: e.target.value })
-                  }
-                />
+            </div>
+            <div className="info-item">
+              <Mail size={20} />
+              <div className="info-text">
+                <label>ایمیل</label>
+                {isEditing ? (
+                  <input
+                    type="email"
+                    value={editData.email}
+                    onChange={(e) => setEditData(prev => ({
+                      ...prev,
+                      email: e.target.value
+                    }))}
+                    className="edit-input"
+                    placeholder="ایمیل"
+                  />
+                ) : (
+                  <span>{editData.email || '---'}</span>
+                )}
               </div>
-
-              <div>
-                <label className="block text-sm mb-2 flex items-center gap-2">
-                  <Building className="w-4 h-4" />
-                  نام شرکت
-                </label>
-                <input
-                  type="text"
-                  className="input-field"
-                  value={profile.company || ''}
-                  onChange={(e) =>
-                    setProfile({ ...profile, company: e.target.value })
-                  }
-                />
+            </div>
+            <div className="info-item">
+              <Phone size={20} />
+              <div className="info-text">
+                <label>شماره تماس</label>
+                <span>{user?.phoneNumber || '---'}</span>
               </div>
             </div>
           </div>
+        </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full"
-          >
-            {loading ? '...' : 'ذخیره تغییرات'}
-          </button>
-        </form>
+        <div className="stats-section">
+          <h2>آمار کاربری</h2>
+          <div className="stats-grid">
+            {userStats.map((stat, index) => (
+              <div key={index} className="stat-card">
+                <stat.icon size={24} />
+                <div className="stat-text">
+                  <label>{stat.label}</label>
+                  <span>{stat.value}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="activity-section">
+          <h2>فعالیت‌های اخیر</h2>
+          <div className="activity-list">
+            {[...Array(3)].map((_, index) => (
+              <div key={index} className="activity-item">
+                <div className="activity-icon">
+                  <LogoAnimation size={32} showParticles={false} showCircle={false} />
+                </div>
+                <div className="activity-details">
+                  <h3>گفتگو با دستیار حقوقی</h3>
+                  <p>مشاوره در مورد قرارداد اجاره</p>
+                  <span className="activity-time">۲ ساعت پیش</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
-}
+};

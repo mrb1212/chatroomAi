@@ -1,110 +1,230 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import {
-  MessageCircle,
-  FileText,
+import React, { useEffect, useState } from 'react';
+import { NavLink } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { 
+  MessageSquare, 
+  FileText, 
+  Briefcase, 
   CreditCard,
-  Settings,
-  Plus,
-  BookOpen,
   User,
-  Moon,
+  Settings,
+  LogOut,
+  LogIn,
+  Plus,
+  Menu,
+  X,
+  Scale,
+  ChevronDown
 } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
+import './Sidebar.scss'; 
+import { RootState } from '../../redux/stores/store';
+import { Typewriter } from '../common/Typewriter';
+import { LogoAnimation } from '../common/LogoAnimation';
 
-export function Sidebar() {
-  const location = useLocation();
-  const { signOut } = useAuthStore();
+const menuItems = [
+  { 
+    path: '/chat', 
+    icon: MessageSquare, 
+    label: 'چت',
+    emoji: '💬',
+    children: [
+      { path: '/chat/new', label: 'گفتگوی جدید' },
+      { path: '/chat/saved', label: 'گفتگو های ذخیره شده' },
+    ]
+  },
+  { 
+    path: '/templates', 
+    icon: FileText, 
+    label: 'قالب‌ها', 
+    emoji: '📄',
+    children: [
+      { path: '/templates/legal', label: 'قالب های حقوقی' },
+      { path: '/templates/business', label: 'قالب های تجاری' },
+    ]
+  },
+  { 
+    path: '/services', 
+    icon: Briefcase, 
+    label: 'خدمات', 
+    emoji: '💼',
+    children: [
+      { path: '/services/consultation', label: 'مشاوره حقوقی' },
+      { path: '/services/documents', label: 'تنظیم اسناد' },
+    ]
+  },
+  { path: '/plans', icon: CreditCard, label: 'اشتراک', emoji: '✨' },
+];
 
-  const menuItems = [
-    {
-      title: 'دستیار حقوقی هوشمند',
-      icon: <MessageCircle className="w-5 h-5" />,
-      emoji: '⚖️',
-      path: '/chat',
-    },
-    {
-      title: 'قالب‌های حقوقی',
-      icon: <FileText className="w-5 h-5" />,
-      emoji: '📋',
-      path: '/templates',
-    },
-    {
-      title: 'خدمات حقوقی',
-      icon: <BookOpen className="w-5 h-5" />,
-      emoji: '💼',
-      path: '/services',
-    },
-    {
-      title: 'اشتراک‌ها',
-      icon: <CreditCard className="w-5 h-5" />,
-      emoji: '💳',
-      path: '/subscriptions',
-    },
-    {
-      title: 'حساب کاربری',
-      icon: <User className="w-5 h-5" />,
-      emoji: '👤',
-      path: '/profile',
-    },
-    {
-      title: 'تنظیمات',
-      icon: <Settings className="w-5 h-5" />,
-      emoji: '⚙️',
-      path: '/settings',
-    },
-  ];
+const footerMenuItems = [
+  { path: '/profile', icon: User, label: 'پروفایل کاربری'},
+  // { path: '/settings', icon: Settings, label: 'تنظیمات' },
+];
+
+export const Sidebar = () => {
+  const [isOpen, setIsOpen] = useState(true);
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const dispatch = useDispatch();
+  const isMobile = window.innerWidth <= 768;
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+
+  const toggleSidebar = () => setIsOpen(!isOpen);
+  
+  const toggleExpand = (path: string) => {
+    setExpandedItems(prev => 
+      prev.includes(path) 
+        ? prev.filter(p => p !== path)
+        : [...prev, path]
+    );
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      setExpandedItems([]);
+    }
+  }, [isOpen]);
+
+
+  const renderMenuItem = (item: typeof menuItems[0]) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedItems.includes(item.path);
+
+    return (
+      <div key={item.path} className="menu-item-container">
+        <div 
+          className={`sidebar-item ${isExpanded ? 'expanded' : ''}`}
+          onClick={() => {
+            if (hasChildren) {
+              toggleExpand(item.path);
+              setIsOpen(true);
+            }
+          }}
+        >
+          <item.icon size={18} strokeWidth={2} />
+          {isOpen && (
+            <>
+              <span className="item-label">{item.label}</span>
+              {/* <span className="emoji">{item.emoji}</span> */}
+              {hasChildren && (
+                <ChevronDown 
+                  size={16} 
+                  className="expand-icon"
+                />
+              )}
+            </>
+          )}
+        </div>
+
+        {hasChildren && isExpanded && isOpen && (
+          <div className="submenu">
+            {item.children.map(child => (
+              <NavLink
+                key={child.path}
+                to={child.path}
+                className={({ isActive }) => 
+                  `submenu-item ${isActive ? 'active' : ''}`
+                }
+              >
+                {child.label}
+              </NavLink>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
-    <aside className="w-64 h-screen bg-surface p-4 flex flex-col shadow-xl transition-all">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-xl font-bold text-primary flex items-center gap-2">
-          <span>دستیار حقوقی</span>
-          <span className="text-2xl">🤖</span>
-        </h1>
-        <button className="p-2 rounded-xl hover:bg-background transition-colors">
-          <Moon className="w-5 h-5" />
+    <>
+      {isMobile && !isOpen && (
+        <button 
+          className="toggle-btn"
+          style={{
+            position: 'fixed',
+            top: '1rem',
+            right: '1rem',
+            zIndex: 50
+          }}
+          onClick={toggleSidebar}
+          aria-label={isOpen ? 'بستن منو' : 'باز کردن منو'}
+        >
+          <Menu size={20} />
         </button>
-      </div>
-
-      <Link
-        to="/chat/new"
-        className="btn-primary flex items-center justify-center gap-2 mb-6 group"
-      >
-        <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
-        <span>گفتگوی جدید</span>
-        <span className="text-xl">💬</span>
-      </Link>
-
-      <nav className="space-y-2 flex-1 overflow-y-auto scrollbar-hide">
-        {menuItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={`sidebar-item group ${
-              location.pathname.startsWith(item.path) ? 'active' : ''
-            }`}
+      )}
+      <aside className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
+        {/* Add glow lines */}
+   
+        
+        <div className="sidebar-header">
+        {isOpen && (
+          <>
+            <LogoAnimation size={32} className="sidebar-logo" showParticles = {false} showCircle ={false} />
+            <h1 style = {{flex:"1"}}>دستیار حقوقی</h1>
+          </> 
+        )}
+          <button 
+            className="toggle-btn"
+            onClick={toggleSidebar}
+            aria-label={isOpen ? 'بستن منو' : 'باز کردن منو'}
           >
-            <span className="group-hover:scale-110 transition-transform">
-              {item.icon}
-            </span>
-            <span>{item.title}</span>
-            <span className="text-xl ml-auto group-hover:scale-110 transition-transform">
-              {item.emoji}
-            </span>
-          </Link>
-        ))}
-      </nav>
+            {isOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
 
-      <button
-        onClick={() => signOut()}
-        className="mt-4 text-red-500 hover:bg-red-500/10 px-4 py-2 rounded-xl flex items-center gap-2 transition-colors group"
-      >
-        <span>خروج</span>
-        <span className="text-xl group-hover:translate-x-1 transition-transform">
-          🚪
-        </span>
-      </button>
-    </aside>
+    
+
+          <NavLink
+            to="/chat/new"
+            className="new-chat-btn"
+          >
+            <Plus size={22}  />
+            {isOpen && (
+              <Typewriter text="گفتگوی جدید" speed={100} />
+            )}
+          </NavLink>
+  
+
+        <nav className="sidebar-nav">
+          {menuItems.map(renderMenuItem)}
+        </nav>
+
+        <div className="sidebar-footer">
+          {isAuthenticated && footerMenuItems.map(({ path, icon: Icon, label }) => (
+            <NavLink
+              key={path}
+              to={path}
+              className={({ isActive }) => 
+                `footer-btn ${isActive ? 'active' : ''}`
+              }
+            >
+              <Icon size={18} strokeWidth={2} />
+              {isOpen && <span>{label}</span>}
+            </NavLink>
+          ))}
+          
+          {isAuthenticated ? (
+            <button 
+              className="logout-btn"
+              onClick={() => {
+                // dispatch logout action
+                dispatch({ type: 'LOGOUT_USER_SUCCESS' });
+              }}
+            >
+              <LogOut size={18} strokeWidth={2} />
+              {isOpen && <span>خروج از حساب</span>}
+            </button>
+          ) : (
+            <NavLink 
+              to="/auth"
+              className="login-btn"
+            >
+              <LogIn size={18} strokeWidth={2} />
+              {isOpen && <span>ورود به حساب</span>}
+            </NavLink>
+          )}
+        </div>
+      </aside>
+      <div className="sidebar-backdrop" onClick={() => setIsOpen(false)} />
+    </>
   );
-}
+};

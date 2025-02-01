@@ -1,12 +1,13 @@
 /** @type {import('tailwindcss').Config} */
-export default {
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+module.exports = {
+  mode: 'jit',
+  content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        primary: '#FFA500',
-        background: '#121212',
-        surface: '#1E1E1E',
+        primary: 'var(--primary)',
+        background: 'var(--background)',
+        surface: 'var(--surface)',
       },
       fontFamily: {
         vazir: ['Vazirmatn', 'system-ui', 'sans-serif'],

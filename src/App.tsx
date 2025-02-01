@@ -1,5 +1,9 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import type { RootState } from './redux/stores/store';
+import { AppDispatch } from './redux/stores/store';
+import { checkToken, loadUser } from './redux/actions/authActions';
 import { AuthForm } from './components/auth/AuthForm';
 import { Sidebar } from './components/layout/Sidebar';
 import { ChatInterface } from './components/chat/ChatInterface';
@@ -8,129 +12,142 @@ import { LegalServices } from './components/services/LegalServices';
 import { SubscriptionPlans } from './components/subscriptions/SubscriptionPlans';
 import { ProfilePage } from './components/profile/ProfilePage';
 import { SettingsPage } from './components/settings/SettingsPage';
-import { useAuthStore } from './store/authStore';
-import { useNotificationStore } from './store/notificationStore';
-import { supabase } from './lib/supabase';
-import { Toast } from './components/ui/Toast';
-
-function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuthStore();
-
-  // Check if the user is loading
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Check if the user is not authenticated
-  if (!user) {
-    return <Navigate to="/auth" />;
-  }
-
-  // If user is authenticated, render the protected content
-  return (
-    <div className="flex">
-      <Sidebar />
-      <main className="flex-1 overflow-auto">{children}</main>
-    </div>
-  );
-}
+import { Loading } from './components/common/Loading';
+import { enqueueSnackbar } from 'notistack';
 
 function App() {
-  const { setUser } = useAuthStore();
-  const { notifications, removeNotification } = useNotificationStore();
+  const dispatch = useDispatch<AppDispatch>();
+  const [isLoading, setIsLoading] = useState(true);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+
+  const auth = useSelector((state: RootState) => state.auth);
+  const infoAuthUserStatus = auth.infoAuthUserStatus;
 
   useEffect(() => {
-    // Check initial auth state
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
+    let isMounted = true;
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+    const initializeAuth = async () => {
+      const startTime = Date.now();
 
-    return () => subscription.unsubscribe();
-  }, [setUser]);
+      try {
+        if (isMounted && !isAuthenticated) {
+          await dispatch(await loadUser());
+          console.log("loadUser"); 
+        }
+      } finally {
+        const endTime = Date.now();
+        const timeElapsed = endTime - startTime;
+        const minimumLoadTime = 2000;
+
+        if (timeElapsed < minimumLoadTime && isMounted) {
+          await new Promise(resolve =>
+            setTimeout(resolve, minimumLoadTime - timeElapsed)
+          );
+        }
+
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [dispatch, isAuthenticated]);
+
+  useEffect(() => {
+    if (infoAuthUserStatus === 'REQUEST') {
+      setIsLoading(true);
+    }
+
+    if (infoAuthUserStatus === 'SUCCESS' && auth.user?.firstName && auth.user?.lastName) {
+      enqueueSnackbar(`${auth.user?.firstName} ${auth.user?.lastName} عزیز خوش آمدید`, {
+        variant: 'success'
+      });
+      const initializeApp = async () => {
+        const startTime = Date.now();
+
+
+        const endTime = Date.now();
+        const timeElapsed = endTime - startTime;
+        const minimumLoadTime = 2000; // 2 seconds in milliseconds
+
+        if (timeElapsed < minimumLoadTime) {
+          // Wait for the remaining time to complete 2 seconds
+          await new Promise(resolve =>
+            setTimeout(resolve, minimumLoadTime - timeElapsed)
+          );
+        }
+
+        setIsLoading(false);
+      };
+      initializeApp();
+    }
+  }, [infoAuthUserStatus]);
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  if (!isAuthenticated) {
+    return <AuthForm />;
+  }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/auth" element={<AuthForm />} />
-        <Route
-          path="/chat"
-          element={
-            <PrivateRoute>
+    <div id="root" className="app-container">
+      {isAuthenticated && <Sidebar />}
+      <div className="main-content">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Navigate to="/chat" />
+            }
+          />
+          {/* <Route path="/auth" element={<AuthForm />} /> */}
+          <Route
+            path="/chat"
+            element={
               <ChatInterface />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/chat/new"
-          element={
-            <PrivateRoute>
-              <ChatInterface key="new" />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/templates"
-          element={
-            <PrivateRoute>
-              <LegalTemplates />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/services"
-          element={
-            <PrivateRoute>
-              <LegalServices />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/subscriptions"
-          element={
-            <PrivateRoute>
-              <SubscriptionPlans />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
               <ProfilePage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <PrivateRoute>
-              <SettingsPage />
-            </PrivateRoute>
-          }
-        />
-        <Route path="/" element={<Navigate to="/chat" />} />
-      </Routes>
-
-      {notifications.map((notification) => (
-        <Toast
-          key={notification.id}
-          message={notification.message}
-          type={notification.type}
-          onClose={() => removeNotification(notification.id)}
-        />
-      ))}
-    </BrowserRouter>
+            }
+          />
+          {/* <Route
+            path="/templates"
+            element={
+              isAuthenticated ? <LegalTemplates /> : <Navigate to="/auth" />
+            }
+          />
+          <Route
+            path="/services"
+            element={
+              isAuthenticated ? <LegalServices /> : <Navigate to="/auth" />
+            }
+          />
+          <Route
+            path="/plans"
+            element={
+              isAuthenticated ? <SubscriptionPlans /> : <Navigate to="/auth" />
+            }
+          />
+        
+          <Route
+            path="/settings"
+            element={
+              isAuthenticated ? <SettingsPage /> : <Navigate to="/auth" />
+            }
+          />  */}
+        </Routes>
+      </div>
+    </div>
   );
 }
 
