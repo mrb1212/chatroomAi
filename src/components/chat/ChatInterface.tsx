@@ -3,8 +3,11 @@ import { Send, User, Bot, Paperclip, Image, Globe } from 'lucide-react';
 import { Typewriter } from '../common/Typewriter';
 import './ChatInterface.scss';
 import { LogoAnimation } from '../common/LogoAnimation';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/src/redux/stores/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/src/redux/stores/store';
+import { ChatRoomList } from './ChatRoomList';
+import { useParams } from 'react-router-dom';
+import { ListMessages, updateChatRoom, updateMessage } from '@/src/redux/actions/chatActions';
 
 type Message = {
   id: number;
@@ -38,10 +41,10 @@ const staticMessages: Message[] = [
   },
   {
     id: 3,
-    content: 'ه،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارد حتما. چه سوالی در مورد قرارداد اجاره دارید؟' ,
+    content: 'ه،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارد حتما. چه سوالی در مورد قرارداد اجاره دارید؟',
     sender: 'bot',
     timestamp: new Date('2024-03-10T10:01:30')
-  },  {
+  }, {
     id: 1,
     content: 'سلام، من دستیار حقوقی هوشمند هستم. چطور میتونم کمکتون کنم؟',
     sender: 'bot',
@@ -55,10 +58,10 @@ const staticMessages: Message[] = [
   },
   {
     id: 3,
-    content: 'ه،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارد حتما. چه سوالی در مورد قرارداد اجاره دارید؟' ,
+    content: 'ه،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارد حتما. چه سوالی در مورد قرارداد اجاره دارید؟',
     sender: 'bot',
     timestamp: new Date('2024-03-10T10:01:30')
-  } , {
+  }, {
     id: 1,
     content: 'سلام، من دستیار حقوقی هوشمند هستم. چطور میتونم کمکتون کنم؟',
     sender: 'bot',
@@ -69,12 +72,12 @@ const staticMessages: Message[] = [
     content: 'سلام. من میخوام در مورد قرارداد اجاره سوال بپرسم',
     sender: 'user',
     timestamp: new Date('2024-03-10T10:01:00')
-  },  {
+  }, {
     id: 2,
     content: 'سلام. من میخوام در مورد قرارداد اجاره سوال بپرسم',
     sender: 'user',
     timestamp: new Date('2024-03-10T10:01:00')
-  },  {
+  }, {
     id: 2,
     content: 'سلام. من میخوام در مورد قرارداد اجاره سوال بپرسم',
     sender: 'user',
@@ -82,7 +85,7 @@ const staticMessages: Message[] = [
   },
   {
     id: 3,
-    content: 'ه،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارد حتما. چه سوالی در مورد قرارداد اجاره دارید؟' ,
+    content: 'ه،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارده،بله، حتما. چه سوالی در مورد قرارد حتما. چه سوالی در مورد قرارداد اجاره دارید؟',
     sender: 'bot',
     timestamp: new Date('2024-03-10T10:01:30')
   }
@@ -160,21 +163,57 @@ const examplePrompts = [
 ];
 
 export function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([]);
+
+  const { id } = useParams();
+  var roomId = id;
+  const dispatch = useDispatch<AppDispatch>();
+
+  const [messages, setMessages]: any = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [currentWelcomeIndex, setCurrentWelcomeIndex] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [botWaiting, setBotWaiting] = useState(false);
+
   const auth = useSelector((state: RootState) => state.auth);
+  const { listMessagesData, listMessagesStatus } = useSelector((state: RootState) => state.chat);
+  const { updateMessageStatus } = useSelector((state: RootState) => state.chat);
+  const listMessages = listMessagesData?.list;
+  const { listChatRoomsData } = useSelector((state: RootState) => state.chat);
+  // user send the message 1. it is showed in the chat 2. it is saved in the database updateMessage INS 3. the user should wait for the response of the bot
 
   // Simulate loading messages
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (isLoading) {
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    async function fetchMessages() {
+      if (roomId) {
+        await dispatch(await ListMessages({ chatRoomId: roomId }));
+      }
+    }
+    fetchMessages();
+  }, [roomId, dispatch]);
+
+  useEffect(() => {
+    if (listMessagesStatus === 'REQUEST') {
+      setIsLoading(true);
+    }
+    if (listMessagesStatus === 'SUCCESS' && listMessages.length > 0) {
       setIsLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [listMessagesStatus]);
+
+  useEffect(() => {
+    setMessages(listMessages);
+  }, [listMessages]);
 
   // Handle welcome messages for new chat
   useEffect(() => {
@@ -192,25 +231,65 @@ export function ChatInterface() {
   };
 
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
   }, [messages]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleNewChat = async (message: string) => {
+
+    var theRoom = listChatRoomsData?.list.find((room: any) => room._id === roomId);
+
+    var filteredMessage = message.split(' ').slice(0, 4).join(' ');
+
+    if (theRoom && theRoom.name === "گفتگوی جدید") {
+      await dispatch(await updateChatRoom({ mode: "UPD", roomId: roomId, name: filteredMessage }));
+    }
+
+    return
+
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
-
-    const userMessage: Message = {
+    const userMessage = {
       id: messages.length + 1,
       content: newMessage,
-      sender: 'user',
+      senderId: auth.user._id,
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    if (roomId) {
+      await dispatch(await updateMessage({ mode: "INS", chatRoomId: roomId, content: newMessage }));
+    }
+    setMessages(prev => [userMessage, ...prev]);
+
     setNewMessage('');
+    setBotWaiting(true);
+
+    const botMessage = {
+      id: messages.length + 1 + "bot",
+      content: "در حال پاسخ به پیام شما...",
+      sender: 'bot',
+      timestamp: new Date(),
+      status: "loading"
+    };
+
+    setMessages(prev => [botMessage, ...prev]);
+
+    handleNewChat(newMessage);
+
   };
 
-  const handleExampleClick = (prompt: {title: string, description: string}) => {
+  useEffect(() => {
+    if (updateMessageStatus === "SUCCESS") {
+      setMessages(prev => [...prev, listMessagesData.list[0]]);
+      setNewMessage('');
+    }
+  }, [updateMessageStatus]);
+
+  const handleExampleClick = (prompt: { title: string, description: string }) => {
     setNewMessage(prompt.title + '\n' + prompt.description);
   };
 
@@ -224,7 +303,7 @@ export function ChatInterface() {
               <button
                 key={index}
                 className="example-card"
-                onClick={() => handleExampleClick({title: prompt.title, description: prompt.description})}
+                onClick={() => handleExampleClick({ title: prompt.title, description: prompt.description })}
               >
                 <h4>{prompt.title}</h4>
                 <p>{prompt.description}</p>
@@ -240,8 +319,8 @@ export function ChatInterface() {
     if (isLoading) {
       return (
         <div className="loading-container">
-          <LogoAnimation size={48}  />
-          <Typewriter 
+          <LogoAnimation size={48} />
+          <Typewriter
             text="در حال آماده‌سازی دستیار حقوقی..."
             speed={100}
             className="loading-text"
@@ -254,7 +333,7 @@ export function ChatInterface() {
       return (
         <div className="new-chat-container">
           <div className="welcome-section">
-            <LogoAnimation size={48} className="welcome-logo"   />
+            <LogoAnimation size={48} className="welcome-logo" />
             <h2>دستیار حقوقی هوشمند</h2>
             <p>{auth.user?.firstName ? `سلام ${auth.user?.firstName}، چطور میتونم کمکتون کنم؟` : 'سلام، چطور میتونم کمکتون کنم؟'}</p>
           </div>
@@ -263,56 +342,80 @@ export function ChatInterface() {
       );
     }
 
-  return (
-            messages.map((message) => (
-              <div
-                key={message.id}
-          className={`message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}
-        >
-          <div className="message-avatar">
-            {message.sender === 'user' ? 
-              <User size={20} /> : 
-              <Bot size={20} />
-            }
-          </div>
-          <div className="message-content">
-            <div className="message-text">{message.content}</div>
-            <div className="message-time">
-              {new Intl.DateTimeFormat('fa-IR', {
-                hour: '2-digit',
-                minute: '2-digit'
-              }).format(message.timestamp)}
-                      </div>
+    return (
+      messages.map((message) => {
+
+        if (message.senderId === auth.user._id) {
+          var sender = "user";
+        } else {
+          var sender = "bot";
+        }
+
+
+        return (
+          <div
+            key={message._id ? message._id : message.id}
+            className={`message ${sender === 'user' ? 'user-message' : 'bot-message'}`}
+          >
+            <div className="message-avatar">
+              {sender === 'user' ?
+                <User size={20} /> :
+                <Bot size={20} />
+              }
+            </div>
+
+            {message.status === 'loading' ? (
+              <div className="message-content particles-container">
+                <div className="message-text">
+                  <div className="loading-content">
+                    <span className="loading-dots">در حال پاسخ به پیام شما</span>
+                  </div>
                 </div>
               </div>
-            ))
+            ) : (
+              <div className="message-content">
+                <div className="message-text">{message.content}</div>
+                <div className="message-time">
+                  {/* Time display code */}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      }
+      )
     );
   };
 
   return (
     <div className="chat-container">
+
+
       <div className="messages-container">
-        {[...Array(20)].map((_, i) => (
-          <div key={i} className="particle" />
-        ))}
-        
-        <div className="messages-wrapper">
-          {renderContent()}
-          <div ref={messagesEndRef} />
+        <div className="particles-container">
+            {[...Array(20)].map((_, i) => (
+            <div key={i} className="particle" />
+          ))}
         </div>
+
+        <div className="messages-wrapper">
+          <div ref={messagesEndRef} />
+          {renderContent()}
+        </div>
+
       </div>
 
-      <div className={`input-container ${messages.length === 0 ? 'new-chat' : ''}`}>
+      {!isLoading && <div className={`input-container ${messages.length === 0 ? 'new-chat' : ''}`}>
         <form onSubmit={handleSubmit} className="input-wrapper">
           <textarea
             value={newMessage}
             onChange={(e) => {
               const textarea = e.target;
-              if(e.target.value.length === 0){
+              if (e.target.value.length === 0) {
                 textarea.style.height = '44px';
                 textarea.style.overflow = 'hidden';
               }
-              if(e.target.value.length > 0){
+              if (e.target.value.length > 0) {
                 textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
               }
               setNewMessage(e.target.value);
@@ -323,17 +426,18 @@ export function ChatInterface() {
                 e.preventDefault();
                 if (newMessage.trim()) {
                   handleSubmit(e as any);
-                textarea.style.height = '44px';
+                  textarea.style.height = '44px';
                 }
               }
             }}
-            placeholder={messages.length === 0 ? 
-              'سوال خود را بپرسید یا از نمونه‌ها انتخاب کنید' : 
-              'با دستیار حقوقی خودتون صحبت کنید' 
+            placeholder={messages.length === 0 ?
+              'سوال خود را بپرسید یا از نمونه‌ها انتخاب کنید' :
+              'با دستیار حقوقی خودتون صحبت کنید'
             }
             className="message-input"
             disabled={isLoading}
           />
+
           <div className="input-actions-row">
             <div className="input-actions">
               <button type="button" className="action-button">
@@ -345,7 +449,7 @@ export function ChatInterface() {
               <button type="button" className="action-button">
                 <Globe size={20} />
               </button>
-          </div>
+            </div>
             <button
               type="submit"
               className="send-button"
@@ -354,8 +458,8 @@ export function ChatInterface() {
               <Send size={20} />
             </button>
           </div>
-          </form>
-      </div>
+        </form>
+      </div>}
     </div>
   );
 }

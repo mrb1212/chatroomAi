@@ -66,7 +66,7 @@ export default function(state: ChatStateType = initialState, action: any): ChatS
                 ...state,
                 listMessagesStatus: "SUCCESS",
                 listMessagesLoading: "sent",
-                listMessagesData: action.payload,
+                listMessagesData: action.payload.data,
                 messages: action.payload.data
             };
         case actions.LIST_MESSAGES_FAILURE:
@@ -140,7 +140,7 @@ export default function(state: ChatStateType = initialState, action: any): ChatS
                 ...state,
                 listChatRoomsStatus: "SUCCESS",
                 listChatRoomsLoading: "sent",
-                listChatRoomsData: action.payload,
+                listChatRoomsData: action.payload.data,
                 rooms: action.payload.data
             };
         case actions.LIST_CHATROOMS_FAILURE:
@@ -177,9 +177,6 @@ export default function(state: ChatStateType = initialState, action: any): ChatS
                 ...state,
                 updateChatRoomStatus: "SUCCESS",
                 updateChatRoomLoading: "sent",
-                rooms: state.rooms.map(room => 
-                    room.id === action.payload.data.id ? action.payload.data : room
-                )
             };
         case actions.UPDATE_CHATROOM_FAILURE:
             return {

@@ -107,6 +107,12 @@ function App() {
               <Navigate to="/chat" />
             }
           />
+          <Route
+            path="/chat/:id"
+            element={
+              <ChatInterface />
+            }
+          />
           {/* <Route path="/auth" element={<AuthForm />} /> */}
           <Route
             path="/chat"

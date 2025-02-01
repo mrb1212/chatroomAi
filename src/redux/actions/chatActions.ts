@@ -1,6 +1,5 @@
 import axios from "axios";
 import * as actions from './../types/chatTypes';
-import authHandler from "@/src/utils/authHandler";
 import { Chat_Endpoint } from '@/src/config';
 import tokenConfig from "@/src/utils/tokenConfig";
 
@@ -24,7 +23,6 @@ export const ListMessages = async (data?: any) => async(dispatch, getState) => {
                 type: actions.LIST_MESSAGES_FAILURE,
                 payload: err.response ? err.response.data : err,
             });
-            authHandler(dispatch, err);
         });
 
     dispatch({
@@ -52,7 +50,6 @@ export const updateMessage = async (data) => async (dispatch, getState) => {
                 type: actions.UPDATE_MESSAGE_FAILURE,
                 payload: err.response ? err.response.data : err,
             });
-            authHandler(dispatch, err);
         });
 
     dispatch({
@@ -80,7 +77,6 @@ export const ListChatRooms = async (data?: any) => async(dispatch, getState) => 
                 type: actions.LIST_CHATROOMS_FAILURE,
                 payload: err.response ? err.response.data : err,
             });
-            authHandler(dispatch, err);
         });
 
     dispatch({
@@ -108,7 +104,6 @@ export const updateChatRoom = async (data) => async (dispatch, getState) => {
                 type: actions.UPDATE_CHATROOM_FAILURE,
                 payload: err.response ? err.response.data : err,
             });
-            authHandler(dispatch, err);
         });
 
     dispatch({

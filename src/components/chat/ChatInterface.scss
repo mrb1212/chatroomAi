@@ -1,3 +1,4 @@
+@use 'sass:math';
 @mixin custom-scrollbar {
     &::-webkit-scrollbar {
       width: 6px;
@@ -66,9 +67,11 @@
 
   .messages-container {
     @include custom-scrollbar;
+
     width: 100%;
     max-width: 1000px;
     flex: 1;
+    overflow-x: hidden;
     overflow-y: auto;
     margin-top: 1rem;
     padding: 1rem;
@@ -78,6 +81,17 @@
     position: relative;
     z-index: 1;
 
+    
+    .particle-container {
+      position: fixed;
+      max-width: 1000px;
+      width: inherit !important;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+    
     // Floating particles effect
     .particle {
       position: absolute;
@@ -92,22 +106,26 @@
 
       @for $i from 1 through 20 {
         &:nth-child(#{$i}) {
-          left: random(100) * 1%;
-          top: random(100) * 1%;
-          animation-delay: random(8000) * -1ms;
-          animation-duration: (random(4000) + 6000) * 1ms;
+          left: math.random(99) * 1%;
+          top: math.random(99) * 1%;
+          animation-delay: math.random(8000) * -1ms;
+          animation-duration: (math.random(4000) + 6000) * 1ms;
         }
       }
     }
+
+    
 
     .messages-wrapper {
       max-width: 1000px;
       width: 100%;
       margin: 0 auto;
       display: flex;
-      flex-direction: column;
+      flex-direction: column-reverse;
       gap: 1rem;
     }
+    
+
 
     .message {
       display: flex;
@@ -416,6 +434,7 @@
   padding: 2rem 1rem;
   position: relative;
   z-index: 1;
+
 
   .welcome-section {
     text-align: center;

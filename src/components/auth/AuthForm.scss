@@ -1,3 +1,5 @@
+@use 'sass:math';
+
 .auth-container {
   min-height: 100dvh;
   display: flex;
@@ -48,14 +50,14 @@
     pointer-events: none;
     animation: floatParticle 8s infinite linear;
 
-    @for $i from 1 through 20 {
-      &:nth-child(#{$i}) {
-        left: random(100) * 1%;
-        top: random(100) * 1%;
-        animation-delay: random(8000) * -1ms;
-        animation-duration: (random(4000) + 6000) * 1ms;
+      @for $i from 1 through 20 {
+        &:nth-child(#{$i}) {
+          left: math.random(100) * 1%;
+          top: math.random(100) * 1%;
+          animation-delay: math.random(8000) * -1ms;
+          animation-duration: (math.random(4000) + 6000) * 1ms;
+        }
       }
-    }
   }
 
   .auth-description, .auth-card {
