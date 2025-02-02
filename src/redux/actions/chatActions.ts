@@ -43,7 +43,6 @@ export const updateMessage = async (data) => async (dispatch, getState) => {
                 type: actions.UPDATE_MESSAGE_SUCCESS,
                 payload: res.data
             });
-            dispatch(await ListMessages());
         })
         .catch((err) => {
             dispatch({

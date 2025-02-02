@@ -6,7 +6,7 @@ import { LogoAnimation } from '../common/LogoAnimation';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/src/redux/stores/store';
 import { ChatRoomList } from './ChatRoomList';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ListMessages, updateChatRoom, updateMessage } from '@/src/redux/actions/chatActions';
 
 type Message = {
@@ -167,7 +167,7 @@ export function ChatInterface() {
   const { id } = useParams();
   var roomId = id;
   const dispatch = useDispatch<AppDispatch>();
-
+  const navigate = useNavigate();
   const [messages, setMessages]: any = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -195,11 +195,16 @@ export function ChatInterface() {
 
   useEffect(() => {
     async function fetchMessages() {
+
       if (roomId) {
         await dispatch(await ListMessages({ chatRoomId: roomId }));
       }
     }
     fetchMessages();
+
+    // return () => {
+    //   dispatch({ type: "LIST_MESSAGES_CLEAR" });
+    // }
   }, [roomId, dispatch]);
 
   useEffect(() => {
@@ -207,12 +212,20 @@ export function ChatInterface() {
       setIsLoading(true);
     }
     if (listMessagesStatus === 'SUCCESS' && listMessages.length > 0) {
-      setIsLoading(false);
+      var timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+      return () => clearTimeout(timer);
     }
   }, [listMessagesStatus]);
 
   useEffect(() => {
-    setMessages(listMessages);
+    var lastMessage = listMessages[listMessages.length - 1];
+    var lastMessageExists = messages.find((message: any) => message?.content === lastMessage?.content);
+    
+    if(!lastMessageExists) {
+      setMessages(listMessages);
+    }
   }, [listMessages]);
 
   // Handle welcome messages for new chat
@@ -242,13 +255,36 @@ export function ChatInterface() {
 
     var filteredMessage = message.split(' ').slice(0, 4).join(' ');
 
+    // if room is not found, create a new room
+    if (!theRoom) {
+      await dispatch(await updateChatRoom({ mode: "INS", name: filteredMessage }));
+      return
+    }
     if (theRoom && theRoom.name === "گفتگوی جدید") {
       await dispatch(await updateChatRoom({ mode: "UPD", roomId: roomId, name: filteredMessage }));
     }
-
     return
-
   }
+
+
+  useEffect(() => {
+    if (!roomId || roomId === "undefined") {
+      // and add the new message to the room function
+      let roomId = listChatRoomsData?.list[0]?._id;
+      const addMessageToRoom = async () => {
+        var userMessage = {
+          id: messages.length + 1,
+          content: newMessage,
+          senderId: auth.user._id,
+          timestamp: new Date()
+        };
+        await dispatch(await updateMessage({ mode: "INS", chatRoomId: roomId, content: newMessage }));
+        navigate(`/chat/${roomId}`);
+      }
+      addMessageToRoom();
+    }
+  }, [listChatRoomsData]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -265,26 +301,26 @@ export function ChatInterface() {
     }
     setMessages(prev => [userMessage, ...prev]);
 
-    setNewMessage('');
-    setBotWaiting(true);
+  
 
     const botMessage = {
       id: messages.length + 1 + "bot",
       content: "در حال پاسخ به پیام شما...",
-      sender: 'bot',
+      senderId: 'bot',
       timestamp: new Date(),
       status: "loading"
     };
 
     setMessages(prev => [botMessage, ...prev]);
 
-    handleNewChat(newMessage);
+    await handleNewChat(newMessage);
 
+    setBotWaiting(true);
   };
 
   useEffect(() => {
     if (updateMessageStatus === "SUCCESS") {
-      setMessages(prev => [...prev, listMessagesData.list[0]]);
+      // setMessages(prev => [...prev, listMessagesData.list[0]]);
       setNewMessage('');
     }
   }, [updateMessageStatus]);
@@ -335,7 +371,11 @@ export function ChatInterface() {
           <div className="welcome-section">
             <LogoAnimation size={48} className="welcome-logo" />
             <h2>دستیار حقوقی هوشمند</h2>
-            <p>{auth.user?.firstName ? `سلام ${auth.user?.firstName}، چطور میتونم کمکتون کنم؟` : 'سلام، چطور میتونم کمکتون کنم؟'}</p>
+            <Typewriter
+              text={auth.user?.firstName ? `سلام ${auth.user?.firstName}، چطور میتونم کمکتون کنم؟` : 'سلام، چطور میتونم کمکتون کنم؟'}
+              speed={50}
+              className="color-text-secondary"
+            />            
           </div>
           {renderExamples()}
         </div>
@@ -345,7 +385,7 @@ export function ChatInterface() {
     return (
       messages.map((message) => {
 
-        if (message.senderId === auth.user._id) {
+        if (message?.senderId === auth.user._id) {
           var sender = "user";
         } else {
           var sender = "bot";
@@ -368,7 +408,12 @@ export function ChatInterface() {
               <div className="message-content particles-container">
                 <div className="message-text">
                   <div className="loading-content">
-                    <span className="loading-dots">در حال پاسخ به پیام شما</span>
+                    {/* <span className="loading-dots">در حال پاسخ به پیام شما</span> */}
+                    <Typewriter
+                      text="در حال پاسخ به پیام شما..."
+                      speed={100}
+                      className="loading-text"
+                    />
                   </div>
                 </div>
               </div>

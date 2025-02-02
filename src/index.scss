@@ -34,8 +34,30 @@
   --text-secondary: #A0A0A0;
 }
 
+.color-surface {  
+  color: #1E1E1E;
+}
+
+.color-primary {
+  color: #FFA500;
+}
+
+.color-background {
+  color: #121212;
+}
+
+.color-text-primary {
+  color: #FFFFFF;
+}
+
+.color-text-secondary {
+  color: #A0A0A0;
+} 
+
+
 * {
     margin:0px ;
+
     padding:0px;
     box-sizing: border-box ;
     font-family: inherit;

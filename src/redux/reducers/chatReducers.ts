@@ -88,7 +88,9 @@ export default function(state: ChatStateType = initialState, action: any): ChatS
                 listMessagesStatus: "nothing",
                 listMessagesLoading: "nothing",
                 listMessagesError: {},
-                listMessagesData: {}
+                listMessagesData: {
+                    list: []
+                }
             };
 
         // Update Message
@@ -103,9 +105,6 @@ export default function(state: ChatStateType = initialState, action: any): ChatS
                 ...state,
                 updateMessageStatus: "SUCCESS",
                 updateMessageLoading: "sent",
-                messages: state.messages.map(msg => 
-                    msg.id === action.payload.data.id ? action.payload.data : msg
-                )
             };
         case actions.UPDATE_MESSAGE_FAILURE:
             return {
@@ -162,8 +161,11 @@ export default function(state: ChatStateType = initialState, action: any): ChatS
                 listChatRoomsStatus: "nothing",
                 listChatRoomsLoading: "nothing",
                 listChatRoomsError: {},
-                listChatRoomsData: {}
+                listChatRoomsData: {
+                    list: []
+                }
             };
+
 
         // Update Chat Room
         case actions.UPDATE_CHATROOM_REQUEST:

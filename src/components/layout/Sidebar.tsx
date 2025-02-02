@@ -134,7 +134,7 @@ const showNotification = (message: string, type: 'success' | 'error') => {
   const handleNewChat = async () => {
     if(listChatRoomsData?.list[0]?.name === "گفتگوی جدید"  ) {
       navigate(`/chat/${listChatRoomsData.list[0]._id}`);
-      showNotification('گفتگوی جدید قبلا ایجاد شده است', 'error');
+      // showNotification('گفتگوی جدید قبلا ایجاد شده است', 'error');
       return
     }
 
@@ -146,15 +146,22 @@ const showNotification = (message: string, type: 'success' | 'error') => {
 
     try {
       await dispatch(await updateChatRoom(newChatData));
-      showNotification('گفتگوی جدید با موفقیت ایجاد شد', 'success');
-      if(isMobile) {
-        setIsOpen(false); // Close sidebar on mobile after creating new chat
-      }
+
     } catch (error) {
       console.error('Error creating new chat:', error);
-      showNotification('خطایی در ایجاد گفتگو رخ داد', 'error');
     }
   };
+
+  // error handling and success handling for updateChatRoom
+  useEffect(() => {
+    if(updateChatRoomStatus === "FAILURE") {
+      showNotification('خطایی در عملیات رخ داد', 'error');
+      return
+    }
+    // if(updateChatRoomStatus === "SUCCESS") {
+    //   showNotification('عملیات با موفقیت انجام شد', 'success');
+    // }
+  }, [updateChatRoomStatus]);
 
   useEffect(() => {
     if(listChatRoomsData?.list[0]?.name === "گفتگوی جدید"  ) {
@@ -172,13 +179,17 @@ const showNotification = (message: string, type: 'success' | 'error') => {
         mode: 'DEL',
         roomId: chatId
       }));
-      showNotification('گفتگو با موفقیت حذف شد', 'success');
+      // showNotification('گفتگو با موفقیت حذف شد', 'success');
       let index = listChatRoomsData?.list.findIndex(chat => chat._id === chatId);
-      navigate(`/chat/${listChatRoomsData?.list[index - 1]?._id || listChatRoomsData?.list[index + 1]?._id}`); // previous chat id
+      if(index) {
+        navigate(`/chat/${listChatRoomsData?.list[index - 1]?._id || listChatRoomsData?.list[index + 1]?._id}`); // previous chat id
+      }else{
+        navigate(`/chat`);
+      }
       setActiveOptions(null);
     } catch (error) {
       console.error('Error deleting chat:', error);
-      showNotification('خطایی در حذف گفتگو رخ داد', 'error');
+      // showNotification('خطایی در حذف گفتگو رخ داد', 'error');
     }
   };
 
@@ -198,10 +209,10 @@ const showNotification = (message: string, type: 'success' | 'error') => {
           name: newName
         }));
         setActiveOptions(null);
-        showNotification('نام گفتگو با موفقیت تغییر کرد', 'success');
+        // showNotification('نام گفتگو با موفقیت تغییر کرد', 'success');
       } catch (error) {
         console.error('Error updating chat:', error);
-        showNotification('خطایی در ویرایش گفتگو رخ داد', 'error');
+        // showNotification('خطایی در ویرایش گفتگو رخ داد', 'error');
       }
     }
     setEditingChat(null);
