@@ -38,7 +38,7 @@ app.post("/github-webhook", (req, res) => {
     if (branch === "production") {
         console.log("Production branch updated. Deploying...");
 
-        execSync("cd /www/wwwroot/chat.keytex.ir && git pull origin production && npm install && npm run build && node restart chat.keytex.ir", (error, stdout, stderr) => {
+        execSync("cd /www/wwwroot/chat.keytex.ir && git pull origin production && npm install --production=false && npm run build && node restart chat.keytex.ir", (error, stdout, stderr) => {
             if (error) {
                 console.error(`Error: ${error.message}`);
                 return res.status(500).send("Deployment failed");
