@@ -1,7 +1,7 @@
 const express = require("express");
 const path = require("path");
 const cors = require("cors")
-const { exec } = require("child_process");
+const { execSync } = require("child_process");
 
 const app = express();
 const PORT = process.env.PORT || 3010;
@@ -38,7 +38,7 @@ app.post("/github-webhook", (req, res) => {
     if (branch === "production") {
         console.log("Production branch updated. Deploying...");
 
-        exec("cd /www/wwwroot/chat.keytex.ir && git pull origin production && npm install && npm run build && node restart chat.keytex.ir", (error, stdout, stderr) => {
+        execSync("cd /www/wwwroot/chat.keytex.ir && git pull origin production && npm install && npm run build && node restart chat.keytex.ir", (error, stdout, stderr) => {
             if (error) {
                 console.error(`Error: ${error.message}`);
                 return res.status(500).send("Deployment failed");
