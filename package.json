@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "vite": "^5.4.2",
+    "@vitejs/plugin-react": "^4.3.1",
     "@reduxjs/toolkit": "^2.5.1",
     "@supabase/supabase-js": "^2.39.7",
     "axios": "^1.7.9",
@@ -32,7 +33,6 @@
     "@eslint/js": "^9.9.1",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
-    "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.15",
     "eslint": "^9.9.1",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
