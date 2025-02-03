@@ -1,0 +1,15 @@
+[Unit]
+Description=Chatroom Vite App
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/node /www/wwwroot/chat.keytex.ir/app.js
+WorkingDirectory=/www/wwwroot/chat.keytex.ir
+Restart=always
+User=root
+Environment=NODE_ENV=production
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
