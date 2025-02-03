@@ -22,8 +22,11 @@ app.get("*", (req, res) => {
 
 app.post("/github-webhook", (req, res) => {
     
-    const payload = JSON.parse(req?.body?.payload)
-    
+    try {
+
+        const payload = JSON.parse(req?.body?.payload)
+        
+
     if(!payload){
         console.log("no payload", req)
         return
@@ -43,11 +46,20 @@ app.post("/github-webhook", (req, res) => {
             if (stderr) console.error(`stderr: ${stderr}`);
             console.log(`stdout: ${stdout}`);
             res.status(200).send("Deployment successful");
+            return
         });
     } else {
         res.status(200).send("Not production branch, skipping deployment.");
+        return
+    }
+    } catch (error) {
+        console.log("error", error)
+        res.status(500).send("Deployment failed");
+        return
     }
 });
+
+
 
 
 // Start server
