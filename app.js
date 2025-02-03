@@ -3,6 +3,13 @@ const path = require("path");
 const cors = require("cors")
 const { execSync } = require("child_process");
 
+const morgan = require('morgan');
+const fs = require('fs');
+
+// Setup logging format (you can customize this as per your needs)
+const logFormat = ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] - :response-time ms';
+const logStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
+
 const app = express();
 const PORT = process.env.PORT || 3010;
 
@@ -10,6 +17,9 @@ const PORT = process.env.PORT || 3010;
    app.use(express.urlencoded({limit:'50mb'}))
    app.use(cors())
    
+
+// log requests
+app.use(morgan(logFormat, { stream: logStream }));
 
 // Serve static files from dist
 app.use(express.static(path.join(__dirname, "dist")));

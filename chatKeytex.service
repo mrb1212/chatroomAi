@@ -11,8 +11,8 @@ WorkingDirectory=/www/wwwroot/chat.keytex.ir
 Restart=always
 User=root
 Environment=NODE_ENV=production
-StandardOutput=syslog
-StandardError=syslog
+StandardOutput=file:/www/wwwlog/chatKeytex/access.log
+StandardError=file:/www/wwwlog/chatKeytex/error.log
 
 [Install]
 WantedBy=multi-user.target
