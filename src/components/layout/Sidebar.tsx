@@ -26,7 +26,7 @@ import { RootState } from '../../redux/stores/store';
 import { Typewriter } from '../common/Typewriter';
 import { LogoAnimation } from '../common/LogoAnimation';
 import { ListChatRooms, updateChatRoom } from '@/src/redux/actions/chatActions';
-import { Modal } from '../common/Modal';
+import  {Modal}  from '../common/Modal';
 import { enqueueSnackbar } from 'notistack';
 
 const menuItems = [
