@@ -214,7 +214,7 @@ export const AuthForm = () => {
 
   const getStepTitle = () => {
     switch (step) {
-      case 'phone': return 'ورود به سیستم';
+      case 'phone': return 'ورود به fwafafafafم';
       case 'otp': return 'کد تایید';
       case 'info': return 'تکمیل اطلاعات';
     }
