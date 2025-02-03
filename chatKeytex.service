@@ -1,3 +1,6 @@
+
+// delete this line the copy the file in /etc/systemd/system/
+
 [Unit]
 Description=Chatroom Vite App
 After=network.target
