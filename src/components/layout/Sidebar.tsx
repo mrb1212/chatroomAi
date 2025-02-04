@@ -68,14 +68,14 @@ const footerMenuItems = [
 ];
 
 export const Sidebar = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const isMobile = window.innerWidth <= 768;
+  const [isOpen, setIsOpen] = useState(isMobile ? false : true);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [activeOptions, setActiveOptions] = useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingChat, setEditingChat] = useState<{id: string, name: string} | null>(null);
   const dispatch = useDispatch<AppDispatch>();
-  const isMobile = window.innerWidth <= 768;
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const navigate = useNavigate();
   const { updateChatRoomStatus, updateChatRoomLoading } = useSelector((state: RootState) => state.chat);
