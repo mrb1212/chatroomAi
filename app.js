@@ -6,19 +6,17 @@ const { execSync } = require("child_process");
 const morgan = require('morgan');
 const fs = require('fs');
 
-// Setup logging format (you can customize this as per your needs)
-const logFormat = ':req[x-forwarded-for] - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] - :response-time ms';
-
-const logStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
-
 const app = express();
 const PORT = process.env.PORT || 3010;
 
-   app.use(express.json({limit: '50mb'}))
-   app.use(express.urlencoded({limit:'50mb'}))
-   app.use(cors())
+app.use(express.json({limit: '50mb'}))
+app.use(express.urlencoded({limit:'50mb'}))
+app.use(cors())
    
 
+// Setup logging format (you can customize this as per your needs)
+const logFormat = ':req[x-forwarded-for] - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] - :response-time ms';
+const logStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
 // log requests
 app.set('trust proxy', true);
 app.use(morgan(logFormat, { stream: logStream }));
@@ -35,17 +33,13 @@ app.get("*", (req, res) => {
 app.post("/github-webhook", (req, res) => {
     
     try {
-
         const payload = JSON.parse(req?.body?.payload)
-        
-
     if(!payload){
         console.log("no payload", req)
         return
     }
     
     const branch = payload?.ref?.split("/").pop(); // Get the branch name
-    
     
     if (branch === "production") {
         console.log("Production branch updated. Deploying...");

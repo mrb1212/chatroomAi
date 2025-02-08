@@ -22,9 +22,15 @@ export interface ChatStateType {
     updateChatRoomStatus: string;
     updateChatRoomLoading: string;
     updateChatRoomError: any;
+
+    lawRagStatus: string;
+    lawRagLoading: string;
+    lawRagData: any;
+    lawRagError: any;
 }
 
 const initialState: ChatStateType = {
+
     messages: [],
     rooms: [],
     selectedRoom: null,
@@ -49,7 +55,13 @@ const initialState: ChatStateType = {
 
     updateChatRoomStatus: "nothing",
     updateChatRoomLoading: "nothing",
-    updateChatRoomError: {}
+    updateChatRoomError: {},
+
+    lawRagStatus: "nothing",
+    lawRagLoading: "nothing",
+    lawRagData: {},
+    lawRagError: {}
+
 };
 
 export default function(state: ChatStateType = initialState, action: any): ChatStateType {
@@ -200,6 +212,43 @@ export default function(state: ChatStateType = initialState, action: any): ChatS
                 updateChatRoomLoading: "nothing",
                 updateChatRoomError: {}
             };
+
+        // lawRag
+        case actions.LAWRAG_REQUEST:
+            return {
+                ...state,
+                lawRagStatus: "REQUEST",
+                lawRagLoading: "sending"
+            };  
+        case actions.LAWRAG_SUCCESS:
+            return {
+                ...state,
+                lawRagStatus: "SUCCESS",
+                lawRagLoading: "sent",
+                lawRagData: action.payload.data
+            };
+        case actions.LAWRAG_FAILURE:
+            return {
+                ...state,
+                lawRagStatus: "FAILURE",
+                lawRagLoading: "failed"
+            };  
+        case actions.LAWRAG_FINISH:
+            return {
+                ...state,
+                lawRagStatus: "nothing",
+                lawRagLoading: "nothing"
+            }; 
+        case actions.LAWRAG_CLEAR:
+            return {
+                ...state,
+                lawRagStatus: "nothing",
+                lawRagLoading: "nothing",
+                lawRagData: {},
+                lawRagError: {}
+            };
+            
+
 
         // Select Chat Room
         case actions.SELECT_CHATROOM:

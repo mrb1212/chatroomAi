@@ -100,3 +100,6 @@ export const SM_Admin_Endpoint = `${server}/api/SM/admin`//admin
 
 // chat
 export const Chat_Endpoint = `${server}/api/chat`
+
+//ai
+export const AI_Endpoint = `${server}/api/ai`

@@ -177,10 +177,16 @@
 
         .message-text {
           margin-bottom: 0.25rem;
-          line-height: 1.5;
-          white-space: pre-wrap;
-          word-break: break-word;
+          // padding-right: 12px;
+          // line-height: 1.5;
+          // white-space: pre-wrap;
+          // word-break: break-word;
         }
+        .message-bot-text {
+          margin-bottom: 0.25rem;
+          padding-right: 12px;
+        }
+
 
         .message-time {
           font-size: 0.75rem;

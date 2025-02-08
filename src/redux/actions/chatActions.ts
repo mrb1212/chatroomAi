@@ -1,6 +1,6 @@
 import axios from "axios";
 import * as actions from './../types/chatTypes';
-import { Chat_Endpoint } from '@/src/config';
+import { AI_Endpoint, Chat_Endpoint } from '@/src/config';
 import tokenConfig from "@/src/utils/tokenConfig";
 
 // Messages Actions
@@ -107,6 +107,32 @@ export const updateChatRoom = async (data) => async (dispatch, getState) => {
 
     dispatch({
         type: actions.UPDATE_CHATROOM_FINISH,
+    });
+};
+
+
+// lawRag
+export const lawRag = async (data?: any) => async(dispatch, getState) => {
+    const param = data;
+    
+    dispatch({
+        type: actions.LAWRAG_REQUEST
+    });
+    await axios.post(`${AI_Endpoint}/lawRag`, param, tokenConfig(getState))
+        .then(async (res) => {
+            dispatch({
+                type: actions.LAWRAG_SUCCESS,
+                payload: res.data
+            });
+        })
+        .catch(async (err) => {
+            dispatch({
+                type: actions.LAWRAG_FAILURE,
+                payload: err.response ? err.response.data : err,
+            });
+        });
+    dispatch({
+        type: actions.LAWRAG_FINISH,
     });
 };
 

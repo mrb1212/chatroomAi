@@ -1,5 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, User, Bot, Paperclip, Image, Globe } from 'lucide-react';
+
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/github-dark.css"; // Adjust theme as needed
+
 import { Typewriter } from '../common/Typewriter';
 import './ChatInterface.scss';
 import { LogoAnimation } from '../common/LogoAnimation';
@@ -7,7 +13,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/src/redux/stores/store';
 import { ChatRoomList } from './ChatRoomList';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ListMessages, updateChatRoom, updateMessage } from '@/src/redux/actions/chatActions';
+
+import { ListMessages, updateChatRoom, updateMessage,lawRag } from '@/src/redux/actions/chatActions';
 
 type Message = {
   id: number;
@@ -183,6 +190,8 @@ export function ChatInterface() {
   const { listChatRoomsData } = useSelector((state: RootState) => state.chat);
   // user send the message 1. it is showed in the chat 2. it is saved in the database updateMessage INS 3. the user should wait for the response of the bot
 
+  const { lawRagStatus, lawRagLoading, lawRagData, lawRagError } = useSelector((state: RootState) => state.chat);
+
   // Simulate loading messages
   useEffect(() => {
     if (isLoading) {
@@ -289,6 +298,8 @@ export function ChatInterface() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
+    setBotWaiting(true);
+
     const userMessage = {
       id: messages.length + 1,
       content: newMessage,
@@ -303,15 +314,15 @@ export function ChatInterface() {
 
   
 
-    const botMessage = {
-      id: messages.length + 1 + "bot",
-      content: "در حال پاسخ به پیام شما...",
-      senderId: 'bot',
-      timestamp: new Date(),
-      status: "loading"
-    };
+    // const botMessage = {
+    //   id: messages.length + 1 + "bot",
+    //   content: "در حال پاسخ به پیام شما...",
+    //   senderId: 'bot',
+    //   timestamp: new Date(),
+    //   status: "loading"
+    // };
 
-    setMessages(prev => [botMessage, ...prev]);
+    // setMessages(prev => [botMessage, ...prev]);
 
     await handleNewChat(newMessage);
 
@@ -321,9 +332,30 @@ export function ChatInterface() {
   useEffect(() => {
     if (updateMessageStatus === "SUCCESS") {
       // setMessages(prev => [...prev, listMessagesData.list[0]]);
+      const fetchLawRag = async () => {
+        await dispatch(await lawRag({ chatRoomId: roomId, message: newMessage }));
+      }
+      fetchLawRag();
       setNewMessage('');
     }
   }, [updateMessageStatus]);
+
+  useEffect(() => {
+    if (lawRagStatus === "REQUEST") {
+      setBotWaiting(true);
+    }
+    if (lawRagStatus === "SUCCESS") {
+      const botMessage = {
+        id: messages.length + 1 + "bot",
+        content: lawRagData,
+        senderId: 'bot',
+        timestamp: new Date(),
+        status: "done"
+      };
+      setMessages(prev => [botMessage, ...prev]);
+      setBotWaiting(false);
+    }
+  }, [lawRagStatus]);
 
   const handleExampleClick = (prompt: { title: string, description: string }) => {
     setNewMessage(prompt.title + '\n' + prompt.description);
@@ -404,8 +436,34 @@ export function ChatInterface() {
               }
             </div>
 
-            {message.status === 'loading' ? (
-              <div className="message-content particles-container">
+            
+              <div className="message-content">
+                <div className={sender === 'user' ? "message-text" : "message-bot-text"}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>{message.content}</ReactMarkdown>
+                </div>
+                <div className="message-time">
+                  {/* Time display code */}
+                </div>
+              </div>
+          
+          </div>
+        )
+      }
+      )
+    );
+  };
+
+  const renderBotWaiting = () => {
+    return (
+      <div
+            key="bot-waiting"
+            className={`message bot-message`}
+          >
+            <div className="message-avatar">
+              <Bot size={20} />
+            </div>
+
+            <div className="message-content particles-container">
                 <div className="message-text">
                   <div className="loading-content">
                     {/* <span className="loading-dots">در حال پاسخ به پیام شما</span> */}
@@ -417,20 +475,9 @@ export function ChatInterface() {
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="message-content">
-                <div className="message-text">{message.content}</div>
-                <div className="message-time">
-                  {/* Time display code */}
-                </div>
-              </div>
-            )}
           </div>
-        )
-      }
-      )
-    );
-  };
+    )
+  }
 
   return (
     <div className="chat-container">
@@ -445,6 +492,7 @@ export function ChatInterface() {
 
         <div className="messages-wrapper">
           <div ref={messagesEndRef} />
+          {botWaiting &&  renderBotWaiting()}
           {renderContent()}
         </div>
 
