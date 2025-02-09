@@ -102,4 +102,4 @@ export const SM_Admin_Endpoint = `${server}/api/SM/admin`//admin
 export const Chat_Endpoint = `${server}/api/chat`
 
 //ai
-export const AI_Endpoint = `${server}/api/ai`
+export const AI_Endpoint = `www.nextlifemoney.com/api/ai`
