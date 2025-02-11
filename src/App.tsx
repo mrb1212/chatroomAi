@@ -14,6 +14,7 @@ import { ProfilePage } from './components/profile/ProfilePage';
 import { SettingsPage } from './components/settings/SettingsPage';
 import { Loading } from './components/common/Loading';
 import { enqueueSnackbar } from 'notistack';
+import { LogoAnimation } from './components/common/LogoAnimation';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -151,6 +152,18 @@ function App() {
               isAuthenticated ? <SettingsPage /> : <Navigate to="/auth" />
             }
           />  */}
+
+      <Route
+            path="*"
+            element={
+              <div className="mvp-message">
+                <LogoAnimation />
+                <br/>
+                <h2>این صفحه در نسخه MVP در دسترس نمی‌باشد</h2>
+                <p>This page is not available in MVP version</p>
+              </div>
+            }
+          />
         </Routes>
       </div>
     </div>

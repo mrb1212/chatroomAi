@@ -325,6 +325,8 @@ const showNotification = (message: string, type: 'success' | 'error') => {
             if (hasChildren) {
               toggleExpand(item.path);
               setIsOpen(true);
+            }else{
+              navigate(item.path);
             }
           }}
         >
